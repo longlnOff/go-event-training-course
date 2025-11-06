@@ -2,7 +2,7 @@ package http
 
 import (
 	"context"
-	ticketsWorker "tickets/worker"
+	"github.com/ThreeDotsLabs/watermill/message"
 )
 
 type SpreadsheetsAPI interface {
@@ -13,11 +13,6 @@ type ReceiptsService interface {
 	IssueReceipt(ctx context.Context, ticketID string) error
 }
 
-// type Handler struct {
-// 	spreadsheetsAPI SpreadsheetsAPI
-// 	receiptsService ReceiptsService
-// }
-
 type Handler struct {
-	worker *ticketsWorker.Worker
+	pub message.Publisher
 }
