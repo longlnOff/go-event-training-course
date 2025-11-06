@@ -42,7 +42,6 @@ func useMiddlewares(router *message.Router, watermillLogger watermill.LoggerAdap
 	// Add logging middleware
 	router.AddMiddleware(func(next message.HandlerFunc) message.HandlerFunc {
 		return func(msg *message.Message) ([]*message.Message, error) {
-			// correlationID := msg.Metadata.Get("correlation_id")
 			logger := log.FromContext(msg.Context()).With(
 				"message_id", msg.UUID,
 				"payload", string(msg.Payload),

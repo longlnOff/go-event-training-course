@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	ticketEntity "tickets/entities"
+	ticketDB "tickets/database"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )
 
@@ -17,4 +18,5 @@ type ReceiptsService interface {
 type Handler struct {
 	// publisher message.Publisher
 	eventBus *cqrs.EventBus
+	db ticketDB.RepositoryDB
 }

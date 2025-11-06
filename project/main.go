@@ -9,13 +9,19 @@ import (
 
 	"tickets/adapters"
 	"tickets/service"
-
+	_ "github.com/lib/pq"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 	"github.com/redis/go-redis/v9"
+	ticketDB "tickets/database"
+	
 )
 
 func main() {
+
+	// DB
+	db := ticketDB.InitDatabase()
+	postgresDB := ticketDB.NewPostgresDB(db)
 	ctx := context.Background()
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
@@ -44,6 +50,7 @@ func main() {
 		rdb,
 		spreadsheetsAPI,
 		receiptsService,
+		postgresDB,
 	).Run(ctx)
 	if err != nil {
 		panic(err)

@@ -4,16 +4,19 @@ import "context"
 
 import (
 	ticketEntity "tickets/entities"
+	ticketDB "tickets/database"
 )
 
 type Handler struct {
 	spreadsheetsAPI SpreadsheetsAPI
 	receiptsService ReceiptsService
+	repository ticketDB.RepositoryDB
 }
 
 func NewHandler(
 	spreadsheetsAPI SpreadsheetsAPI,
 	receiptsService ReceiptsService,
+	repository ticketDB.RepositoryDB,
 ) Handler {
 	if spreadsheetsAPI == nil {
 		panic("missing spreadsheetsAPI")
@@ -25,6 +28,7 @@ func NewHandler(
 	return Handler{
 		spreadsheetsAPI: spreadsheetsAPI,
 		receiptsService: receiptsService,
+		repository: repository,
 	}
 }
 

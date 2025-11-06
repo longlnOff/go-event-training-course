@@ -8,7 +8,7 @@ import (
 	ticketsHttp "tickets/http"
 	ticketsMessage "tickets/message"
 	ticketsEvent "tickets/message/event"
-
+	ticketDB "tickets/database"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -20,12 +20,14 @@ import (
 type Service struct {
 	echoRouter *echo.Echo
 	watermillRouter *message.Router
+	db ticketDB.RepositoryDB
 }
 
 func New(
 	rdb redis.UniversalClient,
 	spreadsheetsAPI ticketsHttp.SpreadsheetsAPI,
 	receiptsService ticketsHttp.ReceiptsService,
+	db ticketDB.RepositoryDB,
 ) Service {
 	watermillLogger := watermill.NewSlogLogger(log.FromContext(context.Background()))
 	publisher:= ticketsEvent.NewRedisPublisher(rdb, watermillLogger)
@@ -48,14 +50,16 @@ func New(
 		rdb,
 		watermillLogger,
 		watermillRouter,
+		db,
 	)
 	_ = eventProcessor
 
-	echoRouter := ticketsHttp.NewHttpRouter(eventBus)
+	echoRouter := ticketsHttp.NewHttpRouter(eventBus, db)
 
 	return Service{
 		echoRouter: echoRouter,
 		watermillRouter: watermillRouter,
+		db: db,
 	}
 }
 
@@ -84,7 +88,18 @@ func (s Service) Run(ctx context.Context) error {
 		if err != nil && !errors.Is(err, stdHTTP.ErrServerClosed) {
 			return err
 		}
-
+		// Why <- on Line 84?
+		// <-s.watermillRouter.Running()
+		// Here's what's happening:
+		// s.watermillRouter.Running() returns a channel of type chan struct{}
+		// The <- operator receives from that channel
+		// This is a blocking operation - the goroutine pauses here until something is received
+		// When Watermill's router finishes starting up, it closes this channel
+		// Receiving from a closed channel immediately returns, so the goroutine unblocks and continues
+		// Think of it like this:
+		// runningChannel := s.watermillRouter.Running()  // Get the channel
+		// <-runningChannel                               // Wait/block until it closes
+		// // Now we know the router is running!
 		return nil
 	})
 
