@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 	ticketEntity "tickets/entities"
-	ticketDB "tickets/database"
+	ticketDB "tickets/db"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )
 

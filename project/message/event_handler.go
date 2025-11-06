@@ -5,7 +5,7 @@ import (
 	"fmt"
 	ticketEntity "tickets/entities"
 	ticketEvent "tickets/message/event"
-	ticketDB "tickets/database"
+	ticketDB "tickets/db"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"

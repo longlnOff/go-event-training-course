@@ -13,6 +13,8 @@ require (
 	golang.org/x/sync v0.14.0
 )
 
+require github.com/samber/lo v1.52.0 // indirect
+
 require (
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect

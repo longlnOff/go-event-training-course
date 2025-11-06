@@ -8,7 +8,7 @@ import (
 	ticketsHttp "tickets/http"
 	ticketsMessage "tickets/message"
 	ticketsEvent "tickets/message/event"
-	ticketDB "tickets/database"
+	ticketDB "tickets/db"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"

@@ -4,7 +4,7 @@ import "context"
 
 import (
 	ticketEntity "tickets/entities"
-	ticketDB "tickets/database"
+	ticketDB "tickets/db"
 )
 
 type Handler struct {

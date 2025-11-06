@@ -13,7 +13,7 @@ import (
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 	"github.com/redis/go-redis/v9"
-	ticketDB "tickets/database"
+	ticketDB "tickets/db"
 	
 )
 

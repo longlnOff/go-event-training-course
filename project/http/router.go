@@ -2,7 +2,7 @@ package http
 
 import (
 	"net/http"
-	ticketDB "tickets/database"
+	ticketDB "tickets/db"
 	libHttp "github.com/ThreeDotsLabs/go-event-driven/v2/common/http"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/labstack/echo/v4"
