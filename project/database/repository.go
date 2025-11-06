@@ -26,14 +26,12 @@ func NewPostgresDB(db *sqlx.DB) *PostgresDB {
 
 func (p *PostgresDB) SaveTicket(ctx context.Context, ticket ticketEntity.TicketBookingConfirmed) error {
 	query := `
-		INSERT INTO tickets (ticket_id, price_amount, price_currency, customer_email)
-		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (ticket_id) DO UPDATE SET
-			price_amount = EXCLUDED.price_amount,
-			price_currency = EXCLUDED.price_currency,
-			customer_email = EXCLUDED.customer_email
+		INSERT INTO 
+			tickets (ticket_id, price_amount, price_currency, customer_email)
+		VALUES 
+			($1, $2, $3, $4)
+		ON CONFLICT DO NOTHING
 	`
-
 	_, err := p.db.ExecContext(ctx, query,
 		ticket.TicketID,
 		ticket.Price.Amount,
@@ -54,7 +52,8 @@ func (p *PostgresDB) RemoveTicket(ctx context.Context, ticketID string) error {
 
 func (p *PostgresDB) GetAllTicketWithoutFilter(ctx context.Context) ([]ticketEntity.TicketBookingConfirmed, error) {
 	query := `
-		SELECT ticket_id, price_amount, price_currency, customer_email
+		SELECT 
+			ticket_id, price_amount, price_currency, customer_email
 		FROM tickets
 	`
 
