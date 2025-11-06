@@ -35,6 +35,7 @@ func main() {
 			return nil
 		},
 	)
+
 	if err != nil {
 		panic(err)
 	}
@@ -51,6 +52,7 @@ func main() {
 		spreadsheetsAPI,
 		receiptsService,
 		postgresDB,
+		apiClients,
 	).Run(ctx)
 	if err != nil {
 		panic(err)

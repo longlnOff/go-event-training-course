@@ -11,6 +11,7 @@ import (
 var (
 	ticketStatusConfirmed = "confirmed"
 	ticketStatusCanceled = "canceled"
+	headerIdempotencyKey = "Idempotency-Key"
 )
 
 type TicketsStatusRequest struct {
@@ -60,13 +61,21 @@ func (h Handler) GetAllTicketWithoutFilter(c echo.Context) error {
 
 func (h Handler) PostTicketsConfirmation(c echo.Context) error {
 	var request TicketsStatusRequest
+	idempotencyKeyFromHeader := c.Request().Header.Get(headerIdempotencyKey)
+	if idempotencyKeyFromHeader == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Idempotency-Key header is required",
+		})
+	}
 	err := c.Bind(&request)
 	if err != nil {
 		return err
 	}
 	for i := range request.Tickets {
 		ticket := request.Tickets[i]
-		header := ticketEntity.NewMessageHeader()
+		idempotencyKey := idempotencyKeyFromHeader + ticket.TicketID
+
+		header := ticketEntity.NewMessageHeaderWithIdempotencyKey(idempotencyKey)
 
 		switch ticket.Status {
 			case ticketStatusConfirmed:

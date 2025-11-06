@@ -5,10 +5,11 @@ import (
 	"errors"
 	"log/slog"
 	stdHTTP "net/http"
+	ticketDB "tickets/db"
 	ticketsHttp "tickets/http"
 	ticketsMessage "tickets/message"
 	ticketsEvent "tickets/message/event"
-	ticketDB "tickets/db"
+	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -28,6 +29,7 @@ func New(
 	spreadsheetsAPI ticketsHttp.SpreadsheetsAPI,
 	receiptsService ticketsHttp.ReceiptsService,
 	db ticketDB.RepositoryDB,
+	clients *clients.Clients,
 ) Service {
 	watermillLogger := watermill.NewSlogLogger(log.FromContext(context.Background()))
 	publisher:= ticketsEvent.NewRedisPublisher(rdb, watermillLogger)
@@ -51,6 +53,8 @@ func New(
 		watermillLogger,
 		watermillRouter,
 		db,
+		clients,
+		eventBus,
 	)
 	_ = eventProcessor
 

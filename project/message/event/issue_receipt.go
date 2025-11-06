@@ -13,6 +13,7 @@ func (h Handler) IssueReceipt(ctx context.Context, event entities.TicketBookingC
 	log.FromContext(ctx).Info("Issuing receipt")
 
 	request := entities.IssueReceiptRequest{
+		IdempotencyKey: event.Header.IdempotencyKey,
 		TicketID: event.TicketID,
 		Price:    event.Price,
 	}
