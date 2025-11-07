@@ -6,7 +6,6 @@ import (
 	"net/http"
 	ticketsEntity "tickets/entities"
 	ticketsMessage "tickets/message"
-
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/labstack/echo/v4"
@@ -31,38 +30,44 @@ func (h Handler) PostTicketStatus(c echo.Context) error {
 	}
 
 	for _, ticket := range request.Tickets {
-		if ticket.Status == "confirmed" {
-			payloadTracker := ticketsEntity.AppendToTrackerPayload{
+		header := ticketsEntity.NewMessageHeader()
+
+		switch ticket.Status {
+		case "confirmed":
+			event := ticketsEntity.TicketBookingConfirmed{
+				Header: header,
 				TicketID: ticket.TicketID,
 				CustomerEmail: ticket.CustomerEmail,
 				Price: ticket.Price,
 			}
-			dataTracker, err := json.Marshal(payloadTracker)
+			data, err := json.Marshal(event)
 			if err != nil {
 				return err
 			}
-			msgTracker := message.NewMessage(watermill.NewUUID(), []byte(dataTracker))
+			msg := message.NewMessage(watermill.NewUUID(), []byte(data))
 
-			err = h.pub.Publish(ticketsMessage.AppendToTrackerTopic, msgTracker)
+			err = h.pub.Publish(ticketsMessage.TicketBookingConfirmedTopic, msg)
 			if err != nil {
 				return err
 			}
-
-			payloadReceipt := ticketsEntity.IssueReceiptPayload{
+		case "canceled":
+			event := ticketsEntity.TicketBookingCanceled{
+				Header: header,
 				TicketID: ticket.TicketID,
+				CustomerEmail: ticket.CustomerEmail,
 				Price: ticket.Price,
 			}
-			dataReceipt, err := json.Marshal(payloadReceipt)
+			data, err := json.Marshal(event)
 			if err != nil {
 				return err
 			}
-			msgReceipt := message.NewMessage(watermill.NewUUID(), []byte(dataReceipt))
+			msg := message.NewMessage(watermill.NewUUID(), []byte(data))
 
-			err = h.pub.Publish(ticketsMessage.IssueReceiptTopic, msgReceipt)
+			err = h.pub.Publish(ticketsMessage.TicketBookingCanceledTopic, msg)
 			if err != nil {
 				return err
 			}
-		} else {
+		default:
 			return fmt.Errorf("unknown ticket status: %s", ticket.Status)
 		}
 	

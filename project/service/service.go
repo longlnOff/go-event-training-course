@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	stdHTTP "net/http"
 	ticketsMessage "tickets/message"
+	ticketsEvent "tickets/message/event"
 	ticketsHttp "tickets/http"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -21,8 +22,8 @@ type Service struct {
 
 func New(
 	redisClient redis.UniversalClient,
-	spreadsheetsAPI ticketsMessage.SpreadsheetsAPI,
-	receiptsService ticketsMessage.ReceiptsService,
+	spreadsheetsAPI ticketsEvent.SpreadsheetsAPI,
+	receiptsService ticketsEvent.ReceiptsService,
 ) Service {
 	watermillLogger := watermill.NewSlogLogger(slog.Default())
 

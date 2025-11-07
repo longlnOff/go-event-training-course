@@ -1,11 +1,10 @@
 package message
 
 import (
-	"context"
 	"encoding/json"
 	"log/slog"
 	ticketsEntity "tickets/entities"
-
+	ticketsEvent "tickets/message/event"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-redisstream/pkg/redisstream"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -13,63 +12,28 @@ import (
 )
 
 
-type SpreadsheetsAPI interface {
-	AppendRow(ctx context.Context, sheetName string, row []string) error
-}
 
-type ReceiptsService interface {
-	IssueReceipt(ctx context.Context, request ticketsEntity.IssueReceiptRequest) error
-}
+
+
 
 func NewMessageRouter(
 	rdb redis.UniversalClient, 
 	logger watermill.LoggerAdapter,
-	spreadSheetsAPI SpreadsheetsAPI,
-	receiptsService ReceiptsService,
+	spreadSheetsAPI ticketsEvent.SpreadsheetsAPI,
+	receiptsService ticketsEvent.ReceiptsService,
 ) *message.Router {
-	ctx := context.Background()
 	router := message.NewDefaultRouter(logger)
 
-
-	spreadSheetSub, err := redisstream.NewSubscriber(
-		redisstream.SubscriberConfig{
-			Client: rdb,
-			ConsumerGroup: AppendToTrackerTopic,
-		},
-		logger,
-	)
-	if err != nil {
-		panic(err)
-	}
-	router.AddConsumerHandler(
-		"append-to-tracker",
-		AppendToTrackerTopic,
-		spreadSheetSub, 
-		func(msg *message.Message) error {
-			var data ticketsEntity.AppendToTrackerPayload
-			err := json.Unmarshal(msg.Payload, &data)
-			if err != nil {
-				return err
-			}
-			slog.Info("Appending ticket to the tracker")
-			err = spreadSheetsAPI.AppendRow(
-				ctx, 
-				"tickets-to-print",
-				[]string{data.TicketID, data.CustomerEmail, data.Price.Amount, data.Price.Currency},
-			)
-			
-			if err != nil {
-				return err
-			}
-			return nil
-		},
+	handler := ticketsEvent.NewHandler(
+		spreadSheetsAPI,
+		receiptsService,
 	)
 
-
+	// ------------ ISSUE RECEIPT -------------
 	receiptServiceSub, err := redisstream.NewSubscriber(
 		redisstream.SubscriberConfig{
 			Client: rdb,
-			ConsumerGroup: IssueReceiptTopic,
+			ConsumerGroup: "issue-receipt",
 		},
 		logger,
 	)
@@ -78,28 +42,72 @@ func NewMessageRouter(
 	}
 	router.AddConsumerHandler(
 		"issue-receipt",
-		IssueReceiptTopic,
+		TicketBookingConfirmedTopic,
 		receiptServiceSub, 
 		func(msg *message.Message) error {
-			var data ticketsEntity.AppendToTrackerPayload
-			err := json.Unmarshal(msg.Payload, &data)
+			var event ticketsEntity.TicketBookingConfirmed
+			err := json.Unmarshal(msg.Payload, &event)
 			if err != nil {
+				slog.Error("failed to unmarshal data")
 				return err
 			}
-			event := ticketsEntity.IssueReceiptRequest{
-				TicketID: data.TicketID,
-				Price: ticketsEntity.Money{
-					Amount: data.Price.Amount,
-					Currency: data.Price.Currency,
-				},
-			}
-			err = receiptsService.IssueReceipt(ctx, event)
-			if err != nil {
-				return err
-			}
-			return nil
+			return handler.IssueReceipt(msg.Context(), event)
 		},
 	)
+
+	// ------------ APPEND TO TRACKER PRINT -------------
+	spreadSheetSub, err := redisstream.NewSubscriber(
+		redisstream.SubscriberConfig{
+			Client: rdb,
+			ConsumerGroup: "append-to-tracker",
+		},
+		logger,
+	)
+	if err != nil {
+		panic(err)
+	}
+	router.AddConsumerHandler(
+		"append-to-tracker",
+		TicketBookingConfirmedTopic,
+		spreadSheetSub, 
+		func(msg *message.Message) error {
+			var event ticketsEntity.TicketBookingConfirmed
+			err := json.Unmarshal(msg.Payload, &event)
+			if err != nil {
+				slog.Error("failed to unmarshal data")
+				return err
+			}
+			return handler.AppendToPrint(msg.Context(), event)
+		},
+	)
+
+
+	// ------------ APPEND TO REFUND -------------
+	RefundSub, err := redisstream.NewSubscriber(
+		redisstream.SubscriberConfig{
+			Client: rdb,
+			ConsumerGroup: "append-to-refund",
+		},
+		logger,
+	)
+	if err != nil {
+		panic(err)
+	}
+	router.AddConsumerHandler(
+		"append-to-refund",
+		TicketBookingCanceledTopic,
+		RefundSub, 
+		func(msg *message.Message) error {
+			var event ticketsEntity.TicketBookingCanceled
+			err := json.Unmarshal(msg.Payload, &event)
+			if err != nil {
+				slog.Error("failed to unmarshal data")
+				return err
+			}
+			return handler.AppendToCancel(msg.Context(), event)
+		},
+	)
+
 
 	return router
 }

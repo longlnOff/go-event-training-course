@@ -1,6 +1,6 @@
 package message
 
 const (
-	IssueReceiptTopic = "issue-receipt"
-	AppendToTrackerTopic = "append-to-tracker"
+	TicketBookingConfirmedTopic = "TicketBookingConfirmed"
+	TicketBookingCanceledTopic = "TicketBookingCanceled"
 )
