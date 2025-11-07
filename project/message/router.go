@@ -2,6 +2,9 @@ package message
 
 import (
 	"context"
+	"encoding/json"
+	"log/slog"
+	ticketsEntity "tickets/entities"
 
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-redisstream/pkg/redisstream"
@@ -15,7 +18,7 @@ type SpreadsheetsAPI interface {
 }
 
 type ReceiptsService interface {
-	IssueReceipt(ctx context.Context, ticketID string) error
+	IssueReceipt(ctx context.Context, request ticketsEntity.IssueReceiptRequest) error
 }
 
 func NewMessageRouter(
@@ -43,7 +46,18 @@ func NewMessageRouter(
 		AppendToTrackerTopic,
 		spreadSheetSub, 
 		func(msg *message.Message) error {
-			err := spreadSheetsAPI.AppendRow(ctx, "tickets-to-print", []string{string(msg.Payload)})
+			var data ticketsEntity.AppendToTrackerPayload
+			err := json.Unmarshal(msg.Payload, &data)
+			if err != nil {
+				return err
+			}
+			slog.Info("Appending ticket to the tracker")
+			err = spreadSheetsAPI.AppendRow(
+				ctx, 
+				"tickets-to-print",
+				[]string{data.TicketID, data.CustomerEmail, data.Price.Amount, data.Price.Currency},
+			)
+			
 			if err != nil {
 				return err
 			}
@@ -67,7 +81,19 @@ func NewMessageRouter(
 		IssueReceiptTopic,
 		receiptServiceSub, 
 		func(msg *message.Message) error {
-			err := receiptsService.IssueReceipt(ctx, string(msg.Payload))
+			var data ticketsEntity.AppendToTrackerPayload
+			err := json.Unmarshal(msg.Payload, &data)
+			if err != nil {
+				return err
+			}
+			event := ticketsEntity.IssueReceiptRequest{
+				TicketID: data.TicketID,
+				Price: ticketsEntity.Money{
+					Amount: data.Price.Amount,
+					Currency: data.Price.Currency,
+				},
+			}
+			err = receiptsService.IssueReceipt(ctx, event)
 			if err != nil {
 				return err
 			}

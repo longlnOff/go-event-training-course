@@ -5,9 +5,8 @@ import (
 	"errors"
 	"log/slog"
 	stdHTTP "net/http"
-	ticketsHttp "tickets/http"
 	ticketsMessage "tickets/message"
-
+	ticketsHttp "tickets/http"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/labstack/echo/v4"
