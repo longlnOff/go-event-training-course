@@ -4,16 +4,22 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"os/signal"
+
+	"tickets/adapters"
+	ticketsMessage "tickets/message"
+	"tickets/service"
 
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
-	ticketsMessage "tickets/message"
-	"tickets/adapters"
-	"tickets/service"
 )
 
 func main() {
 	log.Init(slog.LevelInfo)
+
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
 	apiClients, err := clients.NewClients(os.Getenv("GATEWAY_ADDR"), nil)
 	if err != nil {
@@ -27,7 +33,7 @@ func main() {
 		rdb,
 		spreadsheetsAPI,
 		receiptsService,
-	).Run(context.Background())
+	).Run(ctx)
 	if err != nil {
 		panic(err)
 	}

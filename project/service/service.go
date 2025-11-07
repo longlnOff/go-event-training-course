@@ -7,10 +7,12 @@ import (
 	stdHTTP "net/http"
 	ticketsHttp "tickets/http"
 	ticketsMessage "tickets/message"
-	"github.com/ThreeDotsLabs/watermill/message"
+
 	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
+	"golang.org/x/sync/errgroup"
 )
 
 type Service struct {
@@ -45,18 +47,34 @@ func New(
 }
 
 func (s Service) Run(ctx context.Context) error {
-	go func() {
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
 		err := s.routerMessage.Run(context.Background())
 		if err != nil {
 			// TODO: we will improve it in a next exercise
 			slog.With("error", err).Error("Failed to run watermill router")
+			return err
 		}
-	}()
+		return nil
+	})
 
-	err := s.echoRouter.Start(":8080")
-	if err != nil && !errors.Is(err, stdHTTP.ErrServerClosed) {
-		return err
-	}
+	g.Go(func() error {
+		// when routerMessage running, channel will be closed --> next, httpRouter will start
+		// we do this to ensure http server run after message is running
+		<-s.routerMessage.Running()
+		err := s.echoRouter.Start(":8080")
+		if err != nil && !errors.Is(err, stdHTTP.ErrServerClosed) {
+			return err
+		}
+		return nil
+	})
 
-	return nil
+	g.Go(func() error {
+		// Shut down the HTTP server
+		<-ctx.Done()
+		return s.echoRouter.Shutdown(ctx)
+	})
+
+	return g.Wait()
 }
