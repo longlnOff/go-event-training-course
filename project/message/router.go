@@ -2,10 +2,13 @@ package message
 
 import (
 	"context"
+
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-redisstream/pkg/redisstream"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/redis/go-redis/v9"
 )
+
 
 type SpreadsheetsAPI interface {
 	AppendRow(ctx context.Context, sheetName string, row []string) error
@@ -15,14 +18,16 @@ type ReceiptsService interface {
 	IssueReceipt(ctx context.Context, ticketID string) error
 }
 
-
-func NewHandlers(
+func NewMessageRouter(
 	rdb redis.UniversalClient, 
 	logger watermill.LoggerAdapter,
 	spreadSheetsAPI SpreadsheetsAPI,
 	receiptsService ReceiptsService,
-) {
+) *message.Router {
 	ctx := context.Background()
+	router := message.NewDefaultRouter(logger)
+
+
 	spreadSheetSub, err := redisstream.NewSubscriber(
 		redisstream.SubscriberConfig{
 			Client: rdb,
@@ -33,6 +38,19 @@ func NewHandlers(
 	if err != nil {
 		panic(err)
 	}
+	router.AddConsumerHandler(
+		"append-to-tracker",
+		AppendToTrackerTopic,
+		spreadSheetSub, 
+		func(msg *message.Message) error {
+			err := spreadSheetsAPI.AppendRow(ctx, "tickets-to-print", []string{string(msg.Payload)})
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+	)
+
 
 	receiptServiceSub, err := redisstream.NewSubscriber(
 		redisstream.SubscriberConfig{
@@ -44,37 +62,18 @@ func NewHandlers(
 	if err != nil {
 		panic(err)
 	}
-
-	go func(){
-		messages, err := spreadSheetSub.Subscribe(ctx, AppendToTrackerTopic)
-		if err != nil {
-			panic(err)
-		}
-		for msg := range messages {
-			err := spreadSheetsAPI.AppendRow(ctx, "tickets-to-print", []string{string(msg.Payload)})
-			if err != nil {
-				msg.Nack()
-			} else {
-				msg.Ack()
-			}
-		}
-	}()
-
-
-	go func(){
-		messages, err := receiptServiceSub.Subscribe(ctx, AppendToTrackerTopic)
-		if err != nil {
-			panic(err)
-		}
-		for msg := range messages {
+	router.AddConsumerHandler(
+		"issue-receipt",
+		IssueReceiptTopic,
+		receiptServiceSub, 
+		func(msg *message.Message) error {
 			err := receiptsService.IssueReceipt(ctx, string(msg.Payload))
 			if err != nil {
-				msg.Nack()
-			} else {
-				msg.Ack()
+				return err
 			}
-		}
-	}()
+			return nil
+		},
+	)
 
-
+	return router
 }
