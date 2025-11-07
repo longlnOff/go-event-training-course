@@ -24,7 +24,7 @@ func NewMessageRouter(
 ) *message.Router {
 	router := message.NewDefaultRouter(logger)
 
-	useMiddleware(router)
+	useMiddleware(router, logger)
 
 	handler := ticketsEvent.NewHandler(
 		spreadSheetsAPI,
@@ -53,6 +53,10 @@ func NewMessageRouter(
 				slog.Error("failed to unmarshal data")
 				return err
 			}
+			// TODO: Remove once fixed
+			if event.Price.Currency == "" {
+				event.Price.Currency = "USD"
+			}
 			return handler.IssueReceipt(msg.Context(), event)
 		},
 	)
@@ -78,6 +82,10 @@ func NewMessageRouter(
 			if err != nil {
 				slog.Error("failed to unmarshal data")
 				return err
+			}
+			// TODO: Remove once fixed
+			if event.Price.Currency == "" {
+				event.Price.Currency = "USD"
 			}
 			return handler.AppendToPrint(msg.Context(), event)
 		},

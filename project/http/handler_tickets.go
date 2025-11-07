@@ -47,6 +47,7 @@ func (h Handler) PostTicketStatus(c echo.Context) error {
 			msg := message.NewMessage(watermill.NewUUID(), []byte(data))
 			
 			msg.Metadata.Set("correlation_id", c.Request().Header.Get("Correlation-ID"))
+			msg.Metadata.Set("type", ticketsMessage.TicketBookingConfirmedTopic)
 
 			err = h.pub.Publish(ticketsMessage.TicketBookingConfirmedTopic, msg)
 			if err != nil {
@@ -66,6 +67,7 @@ func (h Handler) PostTicketStatus(c echo.Context) error {
 			msg := message.NewMessage(watermill.NewUUID(), []byte(data))
 
 			msg.Metadata.Set("correlation_id", c.Request().Header.Get("Correlation-ID"))
+			msg.Metadata.Set("type", ticketsMessage.TicketBookingCanceledTopic)
 
 			err = h.pub.Publish(ticketsMessage.TicketBookingCanceledTopic, msg)
 			if err != nil {
