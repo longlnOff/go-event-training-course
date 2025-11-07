@@ -2,13 +2,13 @@ package event
 
 import (
 	"context"
-	"log/slog"
 	ticketsEntity "tickets/entities"
+	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 )
 
 
 func (h Handler) IssueReceipt(ctx context.Context, event ticketsEntity.TicketBookingConfirmed) error {
-    slog.Info("Issuing receipt...")
+    log.FromContext(ctx).Info("Issuing receipt...")
     // ...
 	request := ticketsEntity.IssueReceiptRequest{
 		TicketID: event.TicketID,
@@ -19,7 +19,7 @@ func (h Handler) IssueReceipt(ctx context.Context, event ticketsEntity.TicketBoo
 		request,
 	)
 	if err != nil {
-		slog.Error("Fail to issue receipt")
+		log.FromContext(ctx).Error("Fail to issue receipt")
 		return err
 	}
 	return nil

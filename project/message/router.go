@@ -24,6 +24,8 @@ func NewMessageRouter(
 ) *message.Router {
 	router := message.NewDefaultRouter(logger)
 
+	useMiddleware(router)
+
 	handler := ticketsEvent.NewHandler(
 		spreadSheetsAPI,
 		receiptsService,

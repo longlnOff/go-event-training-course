@@ -2,13 +2,14 @@ package event
 
 import (
 	"context"
-	"log/slog"
 	ticketsEntity "tickets/entities"
+	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 )
 
 
 func (h Handler) AppendToPrint(ctx context.Context, event ticketsEntity.TicketBookingConfirmed) error {
-    slog.Info("Appending ticket to the print")
+	log.FromContext(ctx).Info("Appending ticket to the tracker")
+
     // ...
 	err := h.spreadsheetsAPI.AppendRow(
 		ctx, 
@@ -16,7 +17,7 @@ func (h Handler) AppendToPrint(ctx context.Context, event ticketsEntity.TicketBo
 		[]string{event.TicketID, event.CustomerEmail, event.Price.Amount, event.Price.Currency},
 	)
 	if err != nil {
-		slog.Error("Fail to append ticket to the print")
+		log.FromContext(ctx).Error("Fail to append ticket to the print")
 		return err
 	}
 	return nil
