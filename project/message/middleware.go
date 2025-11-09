@@ -1,21 +1,21 @@
 package message
 
 import (
-	"log/slog"
+	// "log/slog"
 	"time"
 
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
-	"github.com/lithammer/shortuuid/v3"
+	// "github.com/lithammer/shortuuid/v3"
 )
 
 
 func useMiddleware(router *message.Router, logger watermill.LoggerAdapter) {
 	router.AddMiddleware(middleware.Recoverer)
 
-	router.AddMiddleware(CorrelationID)
+	// router.AddMiddleware(CorrelationID)
 
 	router.AddMiddleware(LoggerMiddleware)
 
@@ -51,18 +51,18 @@ func LoggerMiddleware(next message.HandlerFunc) message.HandlerFunc {
 }
 
 
-func CorrelationID(next message.HandlerFunc) message.HandlerFunc {
-	return func(msg *message.Message) ([]*message.Message, error) {
-		correlationID := msg.Metadata.Get("correlation_id")
-		if correlationID == "" {
-			correlationID = shortuuid.New()
-		}
+// func CorrelationID(next message.HandlerFunc) message.HandlerFunc {
+// 	return func(msg *message.Message) ([]*message.Message, error) {
+// 		correlationID := msg.Metadata.Get("correlation_id")
+// 		if correlationID == "" {
+// 			correlationID = shortuuid.New()
+// 		}
 
-		ctx := log.ContextWithCorrelationID(msg.Context(), correlationID)
-		ctx = log.ToContext(ctx, slog.With("correlation_id", correlationID))
+// 		ctx := log.ContextWithCorrelationID(msg.Context(), correlationID)
+// 		ctx = log.ToContext(ctx, slog.With("correlation_id", correlationID))
 
-		msg.SetContext(ctx)
+// 		msg.SetContext(ctx)
 
-		return next(msg)
-	}
-}
+// 		return next(msg)
+// 	}
+// }

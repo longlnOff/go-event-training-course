@@ -2,7 +2,8 @@ package http
 
 import (
 	"context"
-	"github.com/ThreeDotsLabs/watermill/message"
+
+	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )
 
 type SpreadsheetsAPI interface {
@@ -14,5 +15,5 @@ type ReceiptsService interface {
 }
 
 type Handler struct {
-	pub message.Publisher
+	eventBus *cqrs.EventBus
 }

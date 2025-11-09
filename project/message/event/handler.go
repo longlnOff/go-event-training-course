@@ -3,6 +3,8 @@ package event
 import (
 	"context"
 	ticketsEntity "tickets/entities"
+
+	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )
 
 
@@ -34,4 +36,32 @@ func NewHandler(
 		spreadsheetsAPI: spreadsheetsAPI,
 		receiptsService: receiptsService,
 	}
+}
+
+
+func (h *Handler) NewIssueReceiptHandler() cqrs.EventHandler {
+	return cqrs.NewEventHandler(
+		"issue-receipt",
+		func(ctx context.Context, event *ticketsEntity.TicketBookingConfirmed) error {
+			return h.IssueReceipt(ctx, *event)
+		},
+	)
+}
+
+func (h *Handler) NewAppendToTrackerPrinttHandler() cqrs.EventHandler {
+	return cqrs.NewEventHandler(
+		"append-to-tracker",
+		func(ctx context.Context, event *ticketsEntity.TicketBookingConfirmed) error {
+			return h.AppendToPrint(ctx, *event)
+		},
+	)
+}
+
+func (h *Handler) NewAppendToRefundtHandler() cqrs.EventHandler {
+	return cqrs.NewEventHandler(
+		"append-to-refund",
+		func(ctx context.Context, event *ticketsEntity.TicketBookingCanceled) error {
+			return h.AppendToCancel(ctx, *event)
+		},
+	)
 }

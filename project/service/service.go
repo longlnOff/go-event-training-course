@@ -29,15 +29,45 @@ func New(
 
 	redisPublisher := ticketsMessage.NewRedisPublisher(redisClient, watermillLogger)
 
+	// ----------- EVENT BUS -----------
+	eventBus, err := ticketsMessage.NewEventBusWithHandlers(redisPublisher, watermillLogger)
+	if err != nil {
+		panic(err)
+	}
+
+
+	// ----------- EVENT PROCESSOR, ROUTER and HANDLERS -----------
 	router := ticketsMessage.NewMessageRouter(
 		redisClient,
 		watermillLogger,
+	)
+
+	processor, err := ticketsMessage.NewEventProcessor(
+		router,
+		redisClient,
+		watermillLogger,
+	)
+	if err != nil {
+		panic(err)
+	}
+	
+	eventHandlers := ticketsEvent.NewHandler(
 		spreadsheetsAPI,
 		receiptsService,
 	)
 
+	err = ticketsMessage.RegisterEventHandlers(
+		processor,
+		eventHandlers,
+	)
+	if err != nil {
+		panic(err)
+	}
+	// ------------------------------------------------------------------
+
+
 	echoRouter := ticketsHttp.NewHttpRouter(
-		redisPublisher,
+		eventBus,
 	)
 
 	return Service{
