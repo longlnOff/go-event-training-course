@@ -19,6 +19,9 @@ func RegisterEventHandlers(
 	handlers = append(handlers, handler.NewIssueReceiptHandler())
 	handlers = append(handlers, handler.NewAppendToTrackerPrinttHandler())
 	handlers = append(handlers, handler.NewAppendToRefundtHandler())
+	handlers = append(handlers, handler.NewStoreTicketHandler())
+	handlers = append(handlers, handler.NewRemoveCanceledTicketHandler())
+	handlers = append(handlers, handler.NewPrintTicketToFileHandler())
 
 	return processor.AddHandlers(handlers...)
 }

@@ -11,6 +11,7 @@ func (h Handler) IssueReceipt(ctx context.Context, event ticketsEntity.TicketBoo
     log.FromContext(ctx).Info("Issuing receipt...")
     // ...
 	request := ticketsEntity.IssueReceiptRequest{
+		IdempotencyKey: event.Header.IdempotencyKey,
 		TicketID: event.TicketID,
 		Price: event.Price,
 	}

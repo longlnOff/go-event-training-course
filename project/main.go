@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-
 	"tickets/adapters"
 	ticketsMessage "tickets/message"
 	"tickets/service"
-
+	_ "github.com/lib/pq"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
+	"github.com/jmoiron/sqlx"
 )
 
 func main() {
@@ -21,6 +21,13 @@ func main() {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
+
+	// Database
+	db, err := sqlx.Open("postgres", os.Getenv("POSTGRES_URL"))
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
 
 	apiClients, err := clients.NewClients(
 		os.Getenv("GATEWAY_ADDR"), 
@@ -35,11 +42,14 @@ func main() {
 
 	spreadsheetsAPI := adapters.NewSpreadsheetsAPIClient(apiClients)
 	receiptsService := adapters.NewReceiptsServiceClient(apiClients)
+	printingTicketSerivce := adapters.NewPrintingTicketsAPIClient(apiClients)
 	rdb := ticketsMessage.NewRedisClient(os.Getenv("REDIS_ADDR"))
 	err = service.New(
+		db,
 		rdb,
 		spreadsheetsAPI,
 		receiptsService,
+		printingTicketSerivce,
 	).Run(ctx)
 	if err != nil {
 		panic(err)

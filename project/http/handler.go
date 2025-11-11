@@ -2,7 +2,7 @@ package http
 
 import (
 	"context"
-
+	ticketsDB "tickets/db"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )
 
@@ -16,4 +16,5 @@ type ReceiptsService interface {
 
 type Handler struct {
 	eventBus *cqrs.EventBus
+	repo *ticketsDB.TicketsRepository
 }

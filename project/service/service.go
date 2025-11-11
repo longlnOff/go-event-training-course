@@ -3,31 +3,41 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	stdHTTP "net/http"
+	ticketsDB "tickets/db"
+	ticketsHttp "tickets/http"
 	ticketsMessage "tickets/message"
 	ticketsEvent "tickets/message/event"
-	ticketsHttp "tickets/http"
+
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/errgroup"
 )
 
 type Service struct {
+	db *sqlx.DB
 	echoRouter *echo.Echo
 	routerMessage *message.Router
 }
 
 func New(
+	db *sqlx.DB,
 	redisClient redis.UniversalClient,
 	spreadsheetsAPI ticketsEvent.SpreadsheetsAPI,
 	receiptsService ticketsEvent.ReceiptsService,
+	printingTicketService ticketsEvent.PrintingTicketService,
 ) Service {
 	watermillLogger := watermill.NewSlogLogger(slog.Default())
 
 	redisPublisher := ticketsMessage.NewRedisPublisher(redisClient, watermillLogger)
+
+	// repository
+	ticketRepo := ticketsDB.NewTicketsRepository(db)
 
 	// ----------- EVENT BUS -----------
 	eventBus, err := ticketsMessage.NewEventBusWithHandlers(redisPublisher, watermillLogger)
@@ -52,8 +62,11 @@ func New(
 	}
 	
 	eventHandlers := ticketsEvent.NewHandler(
+		eventBus,
+		ticketRepo,
 		spreadsheetsAPI,
 		receiptsService,
+		printingTicketService,
 	)
 
 	err = ticketsMessage.RegisterEventHandlers(
@@ -68,15 +81,20 @@ func New(
 
 	echoRouter := ticketsHttp.NewHttpRouter(
 		eventBus,
+		&ticketRepo,
 	)
 
 	return Service{
+		db: db,
 		echoRouter: echoRouter,
 		routerMessage: router,
 	}
 }
 
 func (s Service) Run(ctx context.Context) error {
+	if err := ticketsDB.InitializeSchema(s.db); err != nil {
+		return fmt.Errorf("failed to initialize database schema: %w", err)
+	}
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {

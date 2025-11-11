@@ -19,6 +19,11 @@ type TicketStatusRequest struct {
 }
 
 func (h Handler) PostTicketStatus(c echo.Context) error {
+	idempotentKey := c.Request().Header.Get("Idempotency-Key")
+	if idempotentKey == "" {
+		return c.JSON(http.StatusBadRequest, "Idempotency-Key must be provided")
+	}
+
 	var request TicketsStatusRequest
 	err := c.Bind(&request)
 	if err != nil {
@@ -27,7 +32,9 @@ func (h Handler) PostTicketStatus(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	for _, ticket := range request.Tickets {
-		header := ticketsEntity.NewMessageHeader()
+		idempotentKey += ticket.TicketID
+
+		header := ticketsEntity.NewMessageHeaderWithIdempotencyKey(idempotentKey)
 
 		switch ticket.Status {
 		case "confirmed":
@@ -64,3 +71,12 @@ func (h Handler) PostTicketStatus(c echo.Context) error {
 
 
 
+func (h Handler) GetAllTicket(c echo.Context) error {
+	ctx := c.Request().Context()
+	data, err := h.repo.FindAll(ctx)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	} else {
+		return c.JSON(http.StatusOK, data)
+	}
+}
