@@ -2,11 +2,11 @@ package event
 
 import (
 	"context"
-	ticketsEntity "tickets/entities"
+	Entity "tickets/entities"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 )
 
-func (h Handler) AppendToCancel(ctx context.Context, event ticketsEntity.TicketBookingCanceled) error {
+func (h Handler) AppendToCancel(ctx context.Context, event Entity.TicketBookingCanceled) error {
     log.FromContext(ctx).Info("Appending ticket to the cancel")
     // ...
 	err := h.spreadsheetsAPI.AppendRow(

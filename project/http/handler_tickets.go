@@ -3,7 +3,7 @@ package http
 import (
 	"fmt"
 	"net/http"
-	ticketsEntity "tickets/entities"
+	Entity "tickets/entities"
 	"github.com/labstack/echo/v4"
 )
 
@@ -14,7 +14,7 @@ type TicketsStatusRequest struct {
 type TicketStatusRequest struct {
 	TicketID      string `json:"ticket_id"`
 	Status        string `json:"status"`
-	Price         ticketsEntity.Money  `json:"price"`
+	Price         Entity.Money  `json:"price"`
 	CustomerEmail string `json:"customer_email"`
 }
 
@@ -34,11 +34,11 @@ func (h Handler) PostTicketStatus(c echo.Context) error {
 	for _, ticket := range request.Tickets {
 		idempotentKey += ticket.TicketID
 
-		header := ticketsEntity.NewMessageHeaderWithIdempotencyKey(idempotentKey)
+		header := Entity.NewMessageHeaderWithIdempotencyKey(idempotentKey)
 
 		switch ticket.Status {
 		case "confirmed":
-			event := ticketsEntity.TicketBookingConfirmed{
+			event := Entity.TicketBookingConfirmed{
 				Header: header,
 				TicketID: ticket.TicketID,
 				CustomerEmail: ticket.CustomerEmail,
@@ -49,7 +49,7 @@ func (h Handler) PostTicketStatus(c echo.Context) error {
 				return fmt.Errorf("failed to publish TicketBookingConfirmed event: %w", err)
 			}
 		case "canceled":
-			event := ticketsEntity.TicketBookingCanceled{
+			event := Entity.TicketBookingCanceled{
 				Header: header,
 				TicketID: ticket.TicketID,
 				CustomerEmail: ticket.CustomerEmail,
@@ -73,7 +73,7 @@ func (h Handler) PostTicketStatus(c echo.Context) error {
 
 func (h Handler) GetAllTicket(c echo.Context) error {
 	ctx := c.Request().Context()
-	data, err := h.repo.FindAll(ctx)
+	data, err := h.ticketRepository.FindAll(ctx)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	} else {

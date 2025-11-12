@@ -28,3 +28,22 @@ func NewEventBusWithHandlers(
 		config,
 	)
 }
+
+
+func NewBus(
+	publisher message.Publisher,
+) (*cqrs.EventBus, error) {
+
+	config := cqrs.EventBusConfig{
+		GeneratePublishTopic: func(params cqrs.GenerateEventPublishTopicParams) (string, error){
+			return params.EventName, nil
+		},
+		Marshaler: marshalerJSON,
+	}
+
+
+	return cqrs.NewEventBusWithConfig(
+		publisher,
+		config,
+	)
+}

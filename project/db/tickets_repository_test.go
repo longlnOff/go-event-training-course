@@ -12,7 +12,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	ticketsDb "tickets/db"
+	Database "tickets/db"
 	"tickets/entities"
 )
 
@@ -36,10 +36,10 @@ func TestTicketsRepository_Add_idempotency(t *testing.T) {
 
 	db := getDb()
 
-	err := ticketsDb.InitializeSchema(db)
+	err := Database.InitializeSchema(db)
 	require.NoError(t, err)
 
-	repo := ticketsDb.NewTicketsRepository(db)
+	repo := Database.NewTicketsRepository(db)
 
 	ticketToAdd := entities.Ticket{
 		TicketID: uuid.NewString(),

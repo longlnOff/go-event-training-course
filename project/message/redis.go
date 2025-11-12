@@ -20,9 +20,11 @@ func NewRedisPublisher(rdb redis.UniversalClient, logger watermill.LoggerAdapter
 		panic(err)
 	}
 
-	return log.CorrelationPublisherDecorator{
+	publisher := log.CorrelationPublisherDecorator{
 		Publisher: pub,
 	}
+
+	return publisher
 }
 
 func NewRedisClient(address string) redis.UniversalClient {

@@ -2,9 +2,16 @@ package http
 
 import (
 	"context"
-	ticketsDB "tickets/db"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
+	Entity "tickets/entities"
 )
+
+type Handler struct {
+	eventBus *cqrs.EventBus
+	ticketRepository TicketsRepository
+	showRepository ShowsRepository
+	bookingRepository BookingsRepository
+}
 
 type SpreadsheetsAPI interface {
 	AppendRow(ctx context.Context, sheetName string, row []string) error
@@ -14,7 +21,14 @@ type ReceiptsService interface {
 	IssueReceipt(ctx context.Context, ticketID string) error
 }
 
-type Handler struct {
-	eventBus *cqrs.EventBus
-	repo *ticketsDB.TicketsRepository
+type TicketsRepository interface {
+	FindAll(ctx context.Context) ([]Entity.Ticket, error)
+}
+
+type ShowsRepository interface {
+	AddShow(ctx context.Context, show Entity.Show) error
+}
+
+type BookingsRepository interface {
+	AddBooking(ctx context.Context, booking Entity.Booking) error
 }

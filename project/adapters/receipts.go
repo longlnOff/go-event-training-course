@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	ticketsEntity "tickets/entities"
+	Entity "tickets/entities"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients/receipts"
 )
@@ -22,7 +22,7 @@ func NewReceiptsServiceClient(clients *clients.Clients) *ReceiptsServiceClient {
 	return &ReceiptsServiceClient{clients: clients}
 }
 
-func (c ReceiptsServiceClient) IssueReceipt(ctx context.Context, request ticketsEntity.IssueReceiptRequest) error {
+func (c ReceiptsServiceClient) IssueReceipt(ctx context.Context, request Entity.IssueReceiptRequest) error {
 	resp, err := c.clients.Receipts.PutReceiptsWithResponse(ctx, receipts.CreateReceipt{
 		IdempotencyKey: &request.IdempotencyKey,
 		TicketId: request.TicketID,

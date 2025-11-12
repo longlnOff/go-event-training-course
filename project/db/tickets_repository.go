@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
-	ticketsEntity "tickets/entities"
+	Entity "tickets/entities"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -25,7 +25,7 @@ func NewTicketsRepository(db *sqlx.DB) TicketsRepository {
 	}
 }
 
-func (t TicketsRepository) Add(ctx context.Context, ticket ticketsEntity.Ticket) error {
+func (t TicketsRepository) Add(ctx context.Context, ticket Entity.Ticket) error {
 	query := `
 	INSERT INTO
 		tickets (ticket_id, price_amount, price_currency, customer_email)
@@ -45,7 +45,7 @@ func (t TicketsRepository) Add(ctx context.Context, ticket ticketsEntity.Ticket)
 	}
 }
 
-func (t TicketsRepository) Remove(ctx context.Context, ticket ticketsEntity.Ticket) error {
+func (t TicketsRepository) Remove(ctx context.Context, ticket Entity.Ticket) error {
 	query := `
 	DELETE FROM
 		tickets
@@ -65,8 +65,8 @@ func (t TicketsRepository) Remove(ctx context.Context, ticket ticketsEntity.Tick
 }
 
 
-func (t TicketsRepository) FindAll(ctx context.Context) ([]ticketsEntity.Ticket, error) {
-    var returnTickets []ticketsEntity.Ticket
+func (t TicketsRepository) FindAll(ctx context.Context) ([]Entity.Ticket, error) {
+    var returnTickets []Entity.Ticket
 
     err := t.db.SelectContext(
         ctx,

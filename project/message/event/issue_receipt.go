@@ -2,15 +2,15 @@ package event
 
 import (
 	"context"
-	ticketsEntity "tickets/entities"
+	Entity "tickets/entities"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 )
 
 
-func (h Handler) IssueReceipt(ctx context.Context, event ticketsEntity.TicketBookingConfirmed) error {
+func (h Handler) IssueReceipt(ctx context.Context, event Entity.TicketBookingConfirmed) error {
     log.FromContext(ctx).Info("Issuing receipt...")
     // ...
-	request := ticketsEntity.IssueReceiptRequest{
+	request := Entity.IssueReceiptRequest{
 		IdempotencyKey: event.Header.IdempotencyKey,
 		TicketID: event.TicketID,
 		Price: event.Price,

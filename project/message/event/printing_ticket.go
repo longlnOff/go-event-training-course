@@ -3,7 +3,7 @@ package event
 import (
 	"context"
 	"fmt"
-	ticketsEntity "tickets/entities"
+	Entity "tickets/entities"
 
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 )
@@ -13,7 +13,7 @@ import (
 	The content doesn't matter, it's just important that it contain the ticket ID, price, and amount.
 */
 
-func (h Handler) PrintTicketToFile(ctx context.Context, event ticketsEntity.TicketBookingConfirmed) error {
+func (h Handler) PrintTicketToFile(ctx context.Context, event Entity.TicketBookingConfirmed) error {
     log.FromContext(ctx).Info("Save confirmed ticket to file...")
 	fileName := fmt.Sprintf("%s-ticket.html", event.TicketID)
 	content := `
@@ -52,8 +52,8 @@ func (h Handler) PrintTicketToFile(ctx context.Context, event ticketsEntity.Tick
 	}
 
 	// perform publish event ticket printed
-	header := ticketsEntity.NewMessageHeader()
-	eventTicketPrinted := ticketsEntity.TicketPrinted{
+	header := Entity.NewMessageHeader()
+	eventTicketPrinted := Entity.TicketPrinted{
 		Header: header,
 		TicketID: event.TicketID,
 		FileName: fileName,

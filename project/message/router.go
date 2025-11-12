@@ -2,6 +2,7 @@ package message
 
 import (
 	ticketsEvent "tickets/message/event"
+	ticketsOutbox "tickets/message/outbox"
 
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-redisstream/pkg/redisstream"
@@ -22,6 +23,8 @@ func RegisterEventHandlers(
 	handlers = append(handlers, handler.NewStoreTicketHandler())
 	handlers = append(handlers, handler.NewRemoveCanceledTicketHandler())
 	handlers = append(handlers, handler.NewPrintTicketToFileHandler())
+	handlers = append(handlers, handler.NewDeadNationHandler())
+
 
 	return processor.AddHandlers(handlers...)
 }
@@ -56,12 +59,13 @@ func NewEventProcessor(
 
 
 func NewMessageRouter(
-	rdb redis.UniversalClient, 
+	postgresSubscriber message.Subscriber,
+	publisher message.Publisher,
 	logger watermill.LoggerAdapter,
 ) *message.Router {
 	router := message.NewDefaultRouter(logger)
 
 	useMiddleware(router, logger)
-
+	ticketsOutbox.AddForwarderHandler(postgresSubscriber, publisher, router, logger)
 	return router
 }

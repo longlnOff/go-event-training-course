@@ -2,12 +2,12 @@ package event
 
 import (
 	"context"
-	ticketsEntity "tickets/entities"
+	Entity "tickets/entities"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 )
 
 
-func (h Handler) AppendToPrint(ctx context.Context, event ticketsEntity.TicketBookingConfirmed) error {
+func (h Handler) AppendToPrint(ctx context.Context, event Entity.TicketBookingConfirmed) error {
 	log.FromContext(ctx).Info("Appending ticket to the tracker")
 
     // ...
