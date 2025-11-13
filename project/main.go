@@ -44,6 +44,7 @@ func main() {
 	receiptsService := adapters.NewReceiptsServiceClient(apiClients)
 	printingTicketSerivce := adapters.NewPrintingTicketsAPIClient(apiClients)
 	deadNationService := adapters.NewDeadNationClient(apiClients)
+	paymentService := adapters.NewPaymentsServiceClient(apiClients)
 
 	rdb := ticketsMessage.NewRedisClient(os.Getenv("REDIS_ADDR"))
 	err = service.New(
@@ -51,8 +52,10 @@ func main() {
 		rdb,
 		spreadsheetsAPI,
 		receiptsService,
+		receiptsService,
 		printingTicketSerivce,
 		deadNationService,
+		paymentService,
 	).Run(ctx)
 	if err != nil {
 		panic(err)

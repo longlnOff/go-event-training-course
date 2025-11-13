@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	Entity "tickets/entities"
-	"tickets/message"
+	"tickets/message/event"
 	"tickets/message/outbox"
-
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 )
@@ -88,7 +87,7 @@ func (t BookingsRepository) AddBooking(ctx context.Context, booking Entity.Booki
 			if err != nil {
 				return fmt.Errorf("could not create outbox publisher: %w", err)
 			}
-			bus, err := message.NewBus(outboxPublisher)
+			bus, err := event.NewBus(outboxPublisher)
 			if err != nil {
 				return fmt.Errorf("could not create event bus: %w", err)
 			}

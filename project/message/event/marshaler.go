@@ -1,4 +1,4 @@
-package message
+package event
 import (
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )

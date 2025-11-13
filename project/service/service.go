@@ -10,6 +10,7 @@ import (
 	ticketsHttp "tickets/http"
 	ticketsMessage "tickets/message"
 	ticketsEvent "tickets/message/event"
+	ticketsCommand "tickets/message/command"
 	ticketsOutbox "tickets/message/outbox"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -29,9 +30,11 @@ func New(
 	db *sqlx.DB,
 	redisClient redis.UniversalClient,
 	spreadsheetsAPI ticketsEvent.SpreadsheetsAPI,
-	receiptsService ticketsEvent.ReceiptsService,
+	receiptsServiceEvent ticketsEvent.ReceiptsService,
+	receiptsServiceCommand ticketsCommand.ReceiptsService,
 	printingTicketService ticketsEvent.PrintingTicketService,
 	deadNationService ticketsEvent.DeadNationService,
+	paymentService ticketsCommand.PaymentService,
 ) Service {
 	watermillLogger := watermill.NewSlogLogger(slog.Default())
 
@@ -43,7 +46,7 @@ func New(
 	bookingRepo := Database.NewBookingsRepository(db)
 
 	// ----------- EVENT BUS -----------
-	eventBus, err := ticketsMessage.NewEventBusWithHandlers(redisPublisher, watermillLogger)
+	eventBus, err := ticketsEvent.NewEventBusWithHandlers(redisPublisher, watermillLogger)
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +59,7 @@ func New(
 		watermillLogger,
 	)
 
-	processor, err := ticketsMessage.NewEventProcessor(
+	processor, err := ticketsEvent.NewEventProcessor(
 		router,
 		redisClient,
 		watermillLogger,
@@ -70,12 +73,12 @@ func New(
 		ticketRepo,
 		showRepo,
 		spreadsheetsAPI,
-		receiptsService,
+		receiptsServiceEvent,
 		printingTicketService,
 		deadNationService,
 	)
 
-	err = ticketsMessage.RegisterEventHandlers(
+	err = ticketsEvent.RegisterEventHandlers(
 		processor,
 		eventHandlers,
 	)
@@ -85,8 +88,42 @@ func New(
 	// ------------------------------------------------------------------
 
 
+
+
+	// ----------- COMMAND BUS -----------
+	commandBus, err := ticketsCommand.NewCommandBusWithHandlers(redisPublisher, watermillLogger)
+	if err != nil {
+		panic(err)
+	}
+
+	// ----------- COMMAND PROCESSOR, ROUTER and HANDLERS -----------
+	commandProcessor, err := ticketsCommand.NewCommandProcessor(
+		router,
+		redisClient,
+		watermillLogger,
+	)
+	if err != nil {
+		panic(err)
+	}
+	
+	commandHandlers := ticketsCommand.NewHandler(
+		receiptsServiceCommand,
+		paymentService,
+	)
+
+	err = ticketsCommand.RegisterCommandHandlers(
+		commandProcessor,
+		commandHandlers,
+	)
+	if err != nil {
+		panic(err)
+	}
+	// ------------------------------------------------------------------
+
+
 	echoRouter := ticketsHttp.NewHttpRouter(
 		eventBus,
+		commandBus,
 		&ticketRepo,
 		&showRepo,
 		&bookingRepo,
